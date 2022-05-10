@@ -29,11 +29,26 @@ class Blockchain {
     return block;
   }
 
+  calculateTime()
+  {
+    let timeDiff,average;
+    const times = [];
+    for(let i=2;i<this.chain.length;i++)
+    {
+        timeDiff = this.chain[i].timestamp - this.chain[i-1].timestamp;
+        times.push(timeDiff);
+
+        average = times.reduce((total, num) => (total+num)/times.length);
+        console.log(`${timeDiff}, ${average}`);
+    }
+  }
+
   // calculates the next propsers by calculating a random index of the validators list
   // index is calculated using the hash of the latest block
   getProposer() {
-    let index =
-      this.chain[this.chain.length - 1].hash[0].charCodeAt(0) % NUMBER_OF_NODES;
+    let index = 1;
+      // this.chain[this.chain.length - 1].hash[0].charCodeAt(0) % NUMBER_OF_NODES;
+    // console.log(index);
     return this.validatorList[index];
   }
 

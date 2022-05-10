@@ -10,6 +10,7 @@ const BlockPool = require("./block-pool");
 const CommitPool = require("./commit-pool");
 const PreparePool = require("./prepare-pool");
 const MessagePool = require("./message-pool");
+const Times = require("./times");
 const { NUMBER_OF_NODES } = require("./config");
 const HTTP_PORT = process.env.HTTP_PORT || 3001;
 
@@ -25,6 +26,8 @@ const blockPool = new BlockPool();
 const preparePool = new PreparePool();
 const commitPool = new CommitPool();
 const messagePool = new MessagePool();
+const times = new Times();
+
 const p2pserver = new P2pserver(
   blockchain,
   transactionPool,
@@ -33,7 +36,8 @@ const p2pserver = new P2pserver(
   preparePool,
   commitPool,
   messagePool,
-  validators
+  validators,
+  times
 );
 
 // sends all transactions in the transaction pool to the user
@@ -43,8 +47,14 @@ app.get("/transactions", (req, res) => {
 
 // sends the entire chain to the user
 app.get("/blocks", (req, res) => {
-  res.json(blockchain.chain);
+  res.json(blockchain.chain); 
 });
+
+app.get("/timings", (req,res) => {
+  times.print();
+  // blockchain.calculateTime();
+  res.json(times.list);
+})
 
 // creates transactions for the sent data
 app.post("/transact", (req, res) => {
@@ -52,7 +62,7 @@ app.post("/transact", (req, res) => {
   const transaction = wallet.createTransaction(data);
   transactionPool.addTransaction(transaction);
   p2pserver.broadcastTransaction(transaction);
-  res.redirect("/transactions");
+  res.json({"message": "success"});
 });
 
 // starts the app server

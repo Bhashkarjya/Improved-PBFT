@@ -1,5 +1,6 @@
 // import the ws module
 const WebSocket = require("ws");
+const fs = require('fs');
 
 // import the min approval constant which will be used to compare the count the messages
 const { MIN_APPROVALS } = require("./config");
@@ -19,8 +20,11 @@ const MESSAGE_TYPE = {
   prepare: "PREPARE",
   pre_prepare: "PRE-PREPARE",
   commit: "COMMIT",
-  round_change: "ROUND_CHANGE"
+  round_change: "ROUND_CHANGE",
+  time_taken: 'TIME_TAKEN'
 };
+
+let startTime, endTime, timeDiff,average;
 
 class P2pserver {
   constructor(
@@ -31,7 +35,8 @@ class P2pserver {
     preparePool,
     commitPool,
     messagePool,
-    validators
+    validators,
+    times
   ) {
     this.blockchain = blockchain;
     this.sockets = [];
@@ -42,6 +47,7 @@ class P2pserver {
     this.commitPool = commitPool;
     this.messagePool = messagePool;
     this.validators = validators;
+    this.times = times;
   }
 
   // Creates a server on a given port
@@ -73,7 +79,7 @@ class P2pserver {
   // broadcasts transactions
   broadcastTransaction(transaction) {
     this.sockets.forEach(socket => {
-      this.sendTransaction(socket, transaction);
+      this.sendTransaction(socket, transaction); 
     });
   }
 
@@ -145,6 +151,21 @@ class P2pserver {
     });
   }
 
+  broadcastTimes(message){
+    this.sockets.forEach(socket => {
+      this.sendTime(socket, message);
+    });
+  }
+
+  sendTime(socket,message){
+    socket.send(
+      JSON.stringify({
+        type: MESSAGE_TYPE.time_taken,
+        message: message
+      })
+    );
+  }
+
   // sends round change message to a particular socket
   sendRoundChange(socket, message) {
     socket.send(
@@ -161,11 +182,12 @@ class P2pserver {
     socket.on("message", message => {
       const data = JSON.parse(message);
 
-      console.log("RECEIVED", data.type);
+      // console.log("RECEIVED", data.type);
 
       // select a perticular message handler
       switch (data.type) {
         case MESSAGE_TYPE.transaction:
+          startTime = new Date().getTime();
           // check if transactions is valid
           if (
             !this.transactionPool.transactionExists(data.transaction) &&
@@ -189,7 +211,6 @@ class P2pserver {
                   this.transactionPool.transactions,
                   this.wallet
                 );
-                console.log("CREATED BLOCK", block);
                 this.broadcastPrePrepare(block);
               }
             } else {
@@ -263,7 +284,16 @@ class P2pserver {
                 this.preparePool,
                 this.commitPool
               );
-            }
+              endTime = new Date().getTime();
+              timeDiff = endTime - startTime;
+
+              //this.broadcastTimes(timeDiff);
+              this.times.list.push(timeDiff);
+              // fs.appendFile('output.txt',timeDiff.toString() + ' \n', err => {
+              //   if(err)
+              //   console.error(err);
+              // });
+              }
             // Send a round change message to nodes
             let message = this.messagePool.createMessage(
               this.blockchain.chain[this.blockchain.chain.length - 1].hash,
@@ -295,6 +325,9 @@ class P2pserver {
             }
           }
           break;
+        
+        case MESSAGE_TYPE.time_taken:
+          this.times.list.push(data.message);
       }
     });
   }
