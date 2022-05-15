@@ -1,8 +1,11 @@
+const fs = require('fs');
+
 // Import total number of nodes used to create validators list
 const { NUMBER_OF_NODES } = require("./config");
 
 // Used to verify block
 const Block = require("./block");
+const { verifyProposer } = require('./block');
 
 class Blockchain {
   // the constructor takes an argument validators class object
@@ -39,16 +42,23 @@ class Blockchain {
         times.push(timeDiff);
 
         average = times.reduce((total, num) => (total+num)/times.length);
-        console.log(`${timeDiff}, ${average}`);
+        let content = `${i-1},${timeDiff} \n`;
+        fs.appendFile('output0.csv',content,err => {
+          if(err)
+              console.error(err);
+      });
     }
   }
 
   // calculates the next propsers by calculating a random index of the validators list
   // index is calculated using the hash of the latest block
   getProposer() {
-    let index = 1;
-      // this.chain[this.chain.length - 1].hash[0].charCodeAt(0) % NUMBER_OF_NODES;
-    // console.log(index);
+    let index = 0;
+    while(index == 0)
+    {
+      index = Math.floor(Math.random()*(NUMBER_OF_NODES-1));
+    }
+    index = 1;
     return this.validatorList[index];
   }
 
@@ -59,13 +69,12 @@ class Blockchain {
       lastBlock.sequenceNo + 1 == block.sequenceNo &&
       block.lastHash === lastBlock.hash &&
       block.hash === Block.blockHash(block) &&
-      Block.verifyBlock(block) &&
-      Block.verifyProposer(block, this.getProposer())
+      Block.verifyBlock(block) 
     ) {
       console.log("BLOCK VALID");
       return true;
     } else {
-      console.log("BLOCK INVLAID");
+      console.log("BLOCK INVALID");
       return false;
     }
   }

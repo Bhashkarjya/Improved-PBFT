@@ -1,0 +1,4 @@
+Average of total number of messages exchanged by one node 67 
+Average of pre-prepare messages exchanged by one node 5 
+Average of commit messages exchanged by one node 32 
+Average of prepare messages exchanged by one node 26 

@@ -13,8 +13,9 @@ class Times{
         for(let i=0;i<this.list.length;i++)
         {
             let content = `${i+1},${this.list[i]}, ${this.average[i]} \n`
+            // let content = `${this.list[i]}, \n`
             // console.log(content);
-            fs.appendFile('output.csv',content,err => {
+            fs.appendFile('output2.csv',content,err => {
                 if(err)
                     console.error(err);
             });

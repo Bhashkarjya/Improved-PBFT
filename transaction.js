@@ -17,7 +17,7 @@ class Transaction {
     return ChainUtil.verifySignature(
       transaction.from,
       transaction.signature,
-      ChainUtil.hash(transaction.input)
+      ChainUtil.hash(transaction.input) 
     );
   }
 }
